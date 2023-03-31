@@ -10,7 +10,6 @@ const (
 	_  = iota //ignore first value by assigning to blank identifier
 	kb = 1 << (10 * iota)
 	mb
-	// GB
 )
 
 type Config struct {

@@ -181,7 +181,8 @@ func newCustomHTTPErrorHandler(logger *zap.SugaredLogger) fiber.ErrorHandler {
 	}
 }
 
-// setCustomConverters sets http query params converters for custom data types.
+// setCustomConverters sets converters for custom data types.
+// Used by fiber.Ctx.QueryParser.
 func setCustomConverters() {
 	var timeConverter = func(value string) reflect.Value {
 		if v, err := time.Parse("2006-01-02 15:04:05.000", value); err == nil {

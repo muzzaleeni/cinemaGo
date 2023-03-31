@@ -36,6 +36,9 @@ func (h *UserHandler) Create(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return newInvalidJSONErr(err)
 	}
+
+	req.Normalise()
+
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
@@ -108,6 +111,9 @@ func (h *UserHandler) Update(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return newInvalidJSONErr(err)
 	}
+
+	req.Normalise()
+
 	if err := req.Validate(); err != nil {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
