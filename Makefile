@@ -1,6 +1,5 @@
 include .envrc
 
-
 # ==================================================================================== #
 # HELPERS
 # ==================================================================================== #
@@ -40,6 +39,44 @@ db/migrations/new:
 db/migrations/up: confirm
 	@echo 'Running up migrations...'
 	migrate -path ./migrations -database ${CINEMAGO_DB_DSN} up
+
+# ==================================================================================== #
+# DATABASE OPERATIONS
+# ==================================================================================== #
+
+## db/docker/init: create a Docker container for PostgreSQL, restore if backup exists, otherwise run migrations
+.PHONY: db/docker/init
+db/docker/init:
+	@echo 'Creating Docker container for PostgreSQL...'
+	docker run -d --name muzzyaqow -p 5432:5432 -e POSTGRES_PASSWORD=db_password -e POSTGRES_USER=postgres -e POSTGRES_DB=cinemago postgres
+	@sleep 5 # Wait for the database to initialize
+	@if [ -f "backup.sql" ]; then \
+		echo 'Restoring PostgreSQL database from backup.sql...'; \
+		cat backup.sql | docker exec -i muzzyaqow psql -U postgres; \
+	else \
+		echo 'No backup found, running migrations...'; \
+		make db/migrations/up; \
+	fi
+
+## db/docker/delete: dump the PostgreSQL database data and delete the container
+.PHONY: db/docker/delete
+db/docker/delete: confirm
+	@echo 'Dumping PostgreSQL database data...'
+	docker exec -t muzzyaqow pg_dumpall -c -U postgres > backup.sql
+	@echo 'Deleting Docker container for PostgreSQL...'
+	docker rm -f muzzyaqow
+
+## db/dump: dump the PostgreSQL database data
+.PHONY: db/dump
+db/dump:
+	@echo 'Dumping PostgreSQL database data...'
+	docker exec -t muzzyaqow pg_dumpall -c -U postgres > dump_$$(date +%Y-%m-%d_%H_%M_%S).sql
+
+## db/restore file=<path/to/dump.sql>: restore the PostgreSQL database data
+.PHONY: db/restore
+db/restore:
+	@echo 'Restoring PostgreSQL database data from ${file}...'
+	cat ${file} | docker exec -i muzzyaqow psql -U postgres
 
 # ==================================================================================== #
 # QUALITY CONTROL
